@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Gen Z Modern color palette */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Vibrant primary colors */
+    --primary: 142 71% 45%;
+    --primary-foreground: 144 100% 9%;
+    --primary-hover: 142 71% 40%;
+
+    /* Modern secondary colors */
+    --secondary: 240 4.8% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 5.9% 10%;
+    --muted-foreground: 240 5% 64.9%;
+
+    /* Electric accent */
+    --accent: 47 96% 53%;
+    --accent-foreground: 26 83% 14%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 85.7% 97.3%;
+
+    --border: 240 5.9% 20%;
+    --input: 240 5.9% 10%;
+    --ring: 142 71% 45%;
+
+    --radius: 1rem;
+
+    /* Gen Z specific design tokens */
+    --neon-green: 142 71% 45%;
+    --electric-blue: 215 100% 60%;
+    --hot-pink: 322 100% 65%;
+    --cyber-purple: 271 81% 56%;
+    --sunset-orange: 25 95% 53%;
+    
+    /* Modern gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(142 71% 45%), hsl(215 100% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(271 81% 56%) 0%, hsl(322 100% 65%) 25%, hsl(47 96% 53%) 50%, hsl(142 71% 45%) 75%, hsl(215 100% 60%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(240 10% 3.9%), hsl(240 5.9% 10%));
+    --gradient-neon: linear-gradient(90deg, hsl(142 71% 45%), hsl(322 100% 65%), hsl(215 100% 60%));
+    --gradient-mesh: radial-gradient(circle at 20% 80%, hsl(322 100% 65% / 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, hsl(142 71% 45% / 0.3) 0%, transparent 50%), radial-gradient(circle at 40% 40%, hsl(215 100% 60% / 0.3) 0%, transparent 50%);
+    
+    /* Enhanced shadows */
+    --shadow-card: 0 4px 6px -1px hsl(142 71% 45% / 0.1), 0 2px 4px -1px hsl(322 100% 65% / 0.06);
+    --shadow-hover: 0 20px 25px -5px hsl(142 71% 45% / 0.1), 0 10px 10px -5px hsl(322 100% 65% / 0.04);
+    --shadow-neon: 0 0 20px hsl(142 71% 45% / 0.5), 0 0 40px hsl(322 100% 65% / 0.3), 0 0 60px hsl(215 100% 60% / 0.2);
+    
+    /* Typography */
+    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --primary: 142 71% 45%;
+    --primary-foreground: 144 100% 9%;
+    --primary-hover: 142 71% 40%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --accent: 47 96% 53%;
+    --accent-foreground: 26 83% 14%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 142 71% 45%;
+    
+    /* Light mode adjustments */
+    --gradient-primary: linear-gradient(135deg, hsl(142 71% 45%), hsl(215 100% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(271 81% 56%) 0%, hsl(322 100% 65%) 25%, hsl(47 96% 53%) 50%, hsl(142 71% 45%) 75%, hsl(215 100% 60%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(240 4.8% 95.9%));
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-card/10 border border-white/20;
+  }
+  
+  .neon-glow {
+    box-shadow: var(--shadow-neon);
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg;
+  }
+  
+  .mesh-bg {
+    background: var(--gradient-mesh);
+  }
+}
+
+@layer components {
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-[length:200%_100%] hover:bg-right-bottom transition-all duration-500;
+  }
+  
+  .card-glow {
+    @apply relative overflow-hidden;
+  }
+  
+  .card-glow::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 opacity-0 transition-opacity duration-300;
+  }
+  
+  .card-glow:hover::before {
+    @apply opacity-100;
+  }
+}

@@ -1,0 +1,5 @@
+Email,Full Name,Role,Department,Year of Study,Roll Number,Phone Number,Course,Section,Branch
+john.doe@example.com,John Doe,student,Computer Science,2,CS2024001,+1234567890,B.Tech,A,CSE
+jane.smith@example.com,Jane Smith,student,Electronics,3,EC2023002,+0987654321,B.Tech,B,ECE
+prof.wilson@example.com,Prof. Wilson,teacher,Mathematics,,MT2020001,+1122334455,,,
+mentor.kumar@example.com,Mentor Kumar,mentor,Physics,4,PH2021003,+5566778899,M.Tech,A,PHY

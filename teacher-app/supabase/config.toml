@@ -1,0 +1,7 @@
+project_id = "veopatdezecrgrnqmrrl"
+
+[functions.create-user]
+verify_jwt = false
+
+[functions.send-auth-email]
+verify_jwt = false
