@@ -317,27 +317,110 @@ export const StudentDashboard = ({ user, profile }: StudentDashboardProps) => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="glass-effect hover-lift">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-orange-500/10 rounded-full mx-auto mb-2">
-              <Flame className="h-6 w-6 text-orange-500" />
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Flame className="h-5 w-5 text-orange-500" />
+              Daily Streak
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-orange-500 mb-1">{streakCount}</div>
+              <div className="text-sm text-muted-foreground mb-3">Day Streak</div>
+              {!todayCheckedIn ? (
+                <Button 
+                  onClick={handleDailyCheckIn}
+                  size="sm"
+                  className="w-full"
+                >
+                  Check In Today
+                </Button>
+              ) : (
+                <Badge variant="default" className="bg-green-500 w-full py-2">
+                  ✓ Checked In!
+                </Badge>
+              )}
             </div>
-            <div className="text-2xl font-bold text-orange-500">{streakCount}</div>
-            <div className="text-sm text-muted-foreground mb-2">Day Streak</div>
-            {!todayCheckedIn ? (
-              <Button 
-                onClick={handleDailyCheckIn}
-                size="sm"
-                className="w-full text-xs"
-              >
-                Check In
-              </Button>
-            ) : (
-              <Badge variant="default" className="bg-green-500 text-xs">
-                ✓ Done!
-              </Badge>
-            )}
+
+            {/* Leaderboard inside Streak Card */}
+            <div className="border-t pt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Crown className="h-4 w-4 text-yellow-500" />
+                <h3 className="font-semibold text-sm">Top 10 Contributors</h3>
+              </div>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {leaderboard.length > 0 ? (
+                  <>
+                    {leaderboard.map((leader, index) => (
+                      <div 
+                        key={leader.user_id}
+                        className={`flex items-center gap-2 p-2 rounded-lg text-xs ${
+                          leader.user_id === user.id ? 'bg-primary/10 border border-primary/20' : 'hover:bg-accent/5'
+                        } transition-colors`}
+                      >
+                        <div className={`flex items-center justify-center w-6 h-6 rounded-full font-bold text-xs ${
+                          index === 0 ? 'bg-yellow-500 text-white' :
+                          index === 1 ? 'bg-gray-400 text-white' :
+                          index === 2 ? 'bg-orange-600 text-white' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={leader.profile_picture_url} />
+                          <AvatarFallback className="text-xs">{leader.full_name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">
+                            {leader.full_name}
+                            {leader.user_id === user.id && (
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">You</Badge>
+                            )}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Flame className="h-3 w-3 text-orange-500" />
+                          <span className="font-bold text-xs text-orange-500">{leader.daily_streak}</span>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Show user's rank if not in top 10 */}
+                    {userRank && userRank > 10 && (
+                      <>
+                        <div className="border-t border-dashed my-2" />
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 border border-primary/20 text-xs">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full font-bold text-xs bg-muted text-muted-foreground">
+                            {userRank}
+                          </div>
+                          <Avatar className="h-7 w-7">
+                            <AvatarImage src={profile.profile_picture_url} />
+                            <AvatarFallback className="text-xs">{profile.full_name?.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">
+                              {profile.full_name}
+                              <Badge variant="outline" className="ml-1 text-[10px] px-1 py-0">You</Badge>
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Flame className="h-3 w-3 text-orange-500" />
+                            <span className="font-bold text-xs text-orange-500">{streakCount}</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Trophy className="h-8 w-8 mx-auto mb-1 opacity-50" />
+                    <p className="text-xs">No data yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -445,92 +528,8 @@ export const StudentDashboard = ({ user, profile }: StudentDashboardProps) => {
 
         </div>
 
-        {/* Right Column */}
+        {/* Right Column - Empty for now, can add more widgets later */}
         <div className="space-y-6">
-          {/* Leaderboard */}
-          <Card className="glass-effect border-t-4 border-t-yellow-500">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-yellow-500" />
-                Top 10 Contributors
-              </CardTitle>
-              <CardDescription>Streak Leaderboard</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {leaderboard.length > 0 ? (
-                  <>
-                    {leaderboard.map((leader, index) => (
-                      <div 
-                        key={leader.user_id}
-                        className={`flex items-center gap-3 p-2 rounded-lg ${
-                          leader.user_id === user.id ? 'bg-primary/10 border border-primary/20' : 'hover:bg-accent/5'
-                        } transition-colors`}
-                      >
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
-                          index === 0 ? 'bg-yellow-500 text-white' :
-                          index === 1 ? 'bg-gray-400 text-white' :
-                          index === 2 ? 'bg-orange-600 text-white' :
-                          'bg-muted text-muted-foreground'
-                        }`}>
-                          {index + 1}
-                        </div>
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={leader.profile_picture_url} />
-                          <AvatarFallback>{leader.full_name?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {leader.full_name}
-                            {leader.user_id === user.id && (
-                              <Badge variant="outline" className="ml-2 text-xs">You</Badge>
-                            )}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">{leader.department}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Flame className="h-4 w-4 text-orange-500" />
-                          <span className="font-bold text-sm text-orange-500">{leader.daily_streak}</span>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {/* Show user's rank if not in top 10 */}
-                    {userRank && userRank > 10 && (
-                      <>
-                        <div className="border-t border-dashed my-2" />
-                        <div className="flex items-center gap-3 p-2 rounded-lg bg-primary/10 border border-primary/20">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm bg-muted text-muted-foreground">
-                            {userRank}
-                          </div>
-                          <Avatar className="h-9 w-9">
-                            <AvatarImage src={profile.profile_picture_url} />
-                            <AvatarFallback>{profile.full_name?.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {profile.full_name}
-                              <Badge variant="outline" className="ml-2 text-xs">You</Badge>
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">{profile.department}</p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Flame className="h-4 w-4 text-orange-500" />
-                            <span className="font-bold text-sm text-orange-500">{streakCount}</span>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Trophy className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No leaderboard data yet</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 

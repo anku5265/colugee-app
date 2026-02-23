@@ -1,0 +1,22 @@
+{
+  "name": "admin-panel-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3003 -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start -p 3003 -H 0.0.0.0"
+  },
+  "dependencies": {
+    "next": "^14.2.0",
+    "@supabase/supabase-js": "^2.55.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "typescript": "^5.8.3"
+  }
+}

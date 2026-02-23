@@ -224,11 +224,6 @@ const Index = () => {
               <Flame className="h-4 w-4 text-orange-500" />
               <span className="text-sm font-medium">{mockProfile.daily_streak} day streak</span>
             </div>
-            
-            <div className="flex items-center space-x-2 px-3 py-1.5 bg-accent/10 rounded-full">
-              <Users className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium">{mockProfile.connections_count} connections</span>
-            </div>
           </div>
         </header>
 
