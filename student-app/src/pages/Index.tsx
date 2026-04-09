@@ -85,23 +85,32 @@ const Index = () => {
 
   const fetchProfile = async (userId: string) => {
     setLoadingProfile(true);
+
+    // 5 second timeout - agar profile nahi mili toh wapas bhejo
+    const timeout = setTimeout(async () => {
+      await supabase.auth.signOut();
+      setAuthStep('institution');
+      setLoadingProfile(false);
+    }, 5000);
+
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
+      clearTimeout(timeout);
+
       if (!data) {
-        // Profile nahi mili - logout kar do
         await supabase.auth.signOut();
         setAuthStep('institution');
-        setLoadingProfile(false);
         return;
       }
       setProfile(data);
       setAuthStep('app');
     } catch (error) {
+      clearTimeout(timeout);
       console.error('Error fetching profile:', error);
       await supabase.auth.signOut();
       setAuthStep('institution');
