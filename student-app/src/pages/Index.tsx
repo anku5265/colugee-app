@@ -61,22 +61,25 @@ const Index = () => {
 
   // Listen to auth state changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        await fetchProfile(session.user.id);
-      } else {
-        setUser(null);
-        setProfile(null);
-        setAuthStep('institution');
-      }
-    });
-
-    // Check existing session on mount
+    // Check existing session on mount FIRST
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
         fetchProfile(session.user.id);
+      } else {
+        setLoadingProfile(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
+        setAuthStep('institution');
+        setLoadingProfile(false);
       }
     });
 
