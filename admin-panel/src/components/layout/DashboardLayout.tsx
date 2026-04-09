@@ -2,10 +2,14 @@ import { Outlet } from 'react-router-dom';
 import TopHeader from './TopHeader';
 import LeftSidebar from './LeftSidebar';
 
-export default function DashboardLayout() {
+interface DashboardLayoutProps {
+  onLogout: () => void;
+}
+
+export default function DashboardLayout({ onLogout }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50">
-      <TopHeader />
+      <TopHeader onLogout={onLogout} />
       <div className="flex">
         <LeftSidebar />
         <main className="flex-1 ml-64 mt-16 p-6">

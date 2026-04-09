@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { InstitutionCodePage } from "@/components/pages/InstitutionCodePage";
+import { AuthForm } from "@/components/auth/AuthForm";
 import { HomePage } from "@/components/pages/HomePage";
 import { ProfilePage } from "@/components/pages/ProfilePage";
 import { EnhancedProfilePage } from "@/components/pages/EnhancedProfilePage";
@@ -15,24 +18,21 @@ import { StudentDashboard } from "@/components/dashboard/StudentDashboard";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { 
-  LayoutDashboard,
-  Rss,
-  UserPlus,
-  MessageCircle,
-  Search,
-  Handshake,
-  Calendar,
-  BookOpen,
-  Users,
-  GraduationCap,
-  LogOut,
-  Menu,
-  X,
-  Flame,
-  Trophy
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  LayoutDashboard, Rss, UserPlus, MessageCircle, Search,
+  Handshake, Calendar, BookOpen, Users, GraduationCap,
+  LogOut, Menu, X, Flame
 } from "lucide-react";
+
+interface Institution {
+  id: string;
+  code: string;
+  name: string;
+  address: string;
+  contact_email: string;
+  phone: string;
+}
 
 interface Profile {
   id: string;
@@ -45,29 +45,69 @@ interface Profile {
   daily_streak: number;
   connections_count: number;
   department: string;
+  profile_picture_url?: string;
 }
 
+type AuthStep = 'institution' | 'auth' | 'app';
+
 const Index = () => {
+  const [authStep, setAuthStep] = useState<AuthStep>('institution');
+  const [institution, setInstitution] = useState<Institution | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // TEMPORARY BYPASS: Mock user and profile for testing
-  const mockUser = {
-    id: 'test-user-123',
-    email: 'test@student.com',
-  } as User;
+  // Listen to auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        await fetchProfile(session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setAuthStep('institution');
+      }
+    });
 
-  const mockProfile: Profile = {
-    id: 'test-profile-123',
-    user_id: 'test-user-123',
-    role: 'student',
-    institution_id: 'test-institution',
-    institution_roll_number: 'TEST001',
-    full_name: 'Test Student',
-    email: 'test@student.com',
-    daily_streak: 5,
-    connections_count: 10,
-    department: 'Computer Science',
+    // Check existing session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        fetchProfile(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    setLoadingProfile(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+      setAuthStep('app');
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setAuthStep('institution');
+    setInstitution(null);
+    setUser(null);
+    setProfile(null);
   };
 
   const navItems = [
@@ -83,160 +123,162 @@ const Index = () => {
   ];
 
   const renderPage = () => {
+    if (!user || !profile) return null;
     switch (currentPage) {
-      case "profile":
-        return <ProfilePage user={mockUser} />;
-      case "enhanced-profile":
-        return <EnhancedProfilePage user={mockUser} />;
-      case "connect":
-        return <ConnectPage />;
-      case "messages":
-        return <ChatPage />;
-      case "feed":
-        return <FeedPage />;
-      case "discover":
-        return <DiscoverPage />;
-      case "collaborate":
-        return <CollaboratePage />;
-      case "events":
-        return <EventsPage />;
-      case "resources":
-        return <EnhancedResourcesPage />;
-      case "study-groups":
-        return <StudyGroupsPage />;
-      case "dashboard":
-        return <StudentDashboard user={mockUser} profile={mockProfile} />;
-      case "home":
-      default:
-        return <HomePage />;
+      case "profile": return <ProfilePage user={user} />;
+      case "enhanced-profile": return <EnhancedProfilePage user={user} />;
+      case "connect": return <ConnectPage />;
+      case "messages": return <ChatPage />;
+      case "feed": return <FeedPage />;
+      case "discover": return <DiscoverPage />;
+      case "collaborate": return <CollaboratePage />;
+      case "events": return <EventsPage />;
+      case "resources": return <EnhancedResourcesPage />;
+      case "study-groups": return <StudyGroupsPage />;
+      case "dashboard": return <StudentDashboard user={user} profile={profile} />;
+      case "home": default: return <HomePage />;
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside 
-        className={`fixed left-0 top-0 h-full bg-card border-r border-border transition-all duration-300 z-40 ${
-          sidebarOpen ? 'w-64' : 'w-20'
-        }`}
-      >
-        {/* Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-border">
-          {sidebarOpen ? (
-            <>
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <GraduationCap className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-lg font-bold">Colugee Student</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(false)}
-                className="h-8 w-8"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSidebarOpen(true)}
-              className="h-8 w-8 mx-auto"
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <nav className="p-4 space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentPage === item.id;
-            
-            return (
-              <Button
-                key={item.id}
-                variant={isActive ? "default" : "ghost"}
-                className={`w-full justify-start ${!sidebarOpen && 'justify-center px-2'}`}
-                onClick={() => setCurrentPage(item.id)}
-              >
-                <Icon className={`h-5 w-5 ${sidebarOpen && 'mr-3'}`} />
-                {sidebarOpen && <span>{item.label}</span>}
-              </Button>
-            );
-          })}
-        </nav>
-
-        {/* User Profile at Bottom */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-          {sidebarOpen ? (
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src="" />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {mockProfile.full_name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{mockProfile.full_name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{mockProfile.institution_roll_number}</p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                size="sm"
-                onClick={() => window.location.reload()}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          ) : (
-            <Avatar className="h-10 w-10 mx-auto">
-              <AvatarImage src="" />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {mockProfile.full_name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          )}
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
-        {/* Top Bar */}
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-30">
-          <div>
-            <h1 className="text-xl font-semibold capitalize">
-              {navItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
-            </h1>
-            <p className="text-sm text-muted-foreground">{mockProfile.department}</p>
+  // Loading state while fetching profile
+  if (loadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="p-4 bg-primary/10 rounded-2xl inline-block">
+            <GraduationCap className="h-10 w-10 text-primary animate-pulse" />
           </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 px-3 py-1.5 bg-orange-500/10 rounded-full">
-              <Flame className="h-4 w-4 text-orange-500" />
-              <span className="text-sm font-medium">{mockProfile.daily_streak} day streak</span>
-            </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <div className="p-6">
-          {renderPage()}
+          <p className="text-muted-foreground">Loading your profile...</p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Footer */}
-        <Footer />
-      </main>
-    </div>
-  );
+  // Step 1: Institution code
+  if (authStep === 'institution') {
+    return (
+      <InstitutionCodePage
+        onInstitutionSelected={(inst) => {
+          setInstitution(inst);
+          setAuthStep('auth');
+        }}
+      />
+    );
+  }
+
+  // Step 2: Login/Signup
+  if (authStep === 'auth' && institution) {
+    return (
+      <AuthForm
+        institution={institution}
+        onBack={() => setAuthStep('institution')}
+      />
+    );
+  }
+
+  // Step 3: Main App
+  if (authStep === 'app' && user && profile) {
+    return (
+      <div className="min-h-screen bg-background flex">
+        {/* Sidebar */}
+        <aside className={`fixed left-0 top-0 h-full bg-card border-r border-border transition-all duration-300 z-40 ${sidebarOpen ? 'w-64' : 'w-20'}`}>
+          <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+            {sidebarOpen ? (
+              <>
+                <div className="flex items-center space-x-2">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <GraduationCap className="h-5 w-5 text-primary" />
+                  </div>
+                  <span className="text-lg font-bold">Colugee</span>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="h-8 w-8">
+                  <X className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="h-8 w-8 mx-auto">
+                <Menu className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          <nav className="p-4 space-y-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentPage === item.id;
+              return (
+                <Button
+                  key={item.id}
+                  variant={isActive ? "default" : "ghost"}
+                  className={`w-full justify-start ${!sidebarOpen && 'justify-center px-2'}`}
+                  onClick={() => setCurrentPage(item.id)}
+                >
+                  <Icon className={`h-5 w-5 ${sidebarOpen && 'mr-3'}`} />
+                  {sidebarOpen && <span>{item.label}</span>}
+                </Button>
+              );
+            })}
+          </nav>
+
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
+            {sidebarOpen ? (
+              <div className="space-y-3">
+                <button
+                  className="flex items-center space-x-3 w-full hover:bg-accent/10 rounded-lg p-2 transition-colors"
+                  onClick={() => setCurrentPage('enhanced-profile')}
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={profile.profile_picture_url} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {profile.full_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium truncate">{profile.full_name}</p>
+                    <p className="text-xs text-muted-foreground truncate capitalize">{profile.role}</p>
+                  </div>
+                </button>
+                <Button variant="outline" className="w-full justify-start" size="sm" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <Avatar className="h-10 w-10 mx-auto cursor-pointer" onClick={() => setCurrentPage('enhanced-profile')}>
+                <AvatarImage src={profile.profile_picture_url} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {profile.full_name?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+          <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-30">
+            <div>
+              <h1 className="text-xl font-semibold capitalize">
+                {navItems.find(item => item.id === currentPage)?.label || 'Dashboard'}
+              </h1>
+              <p className="text-sm text-muted-foreground">{profile.department}</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 px-3 py-1.5 bg-orange-500/10 rounded-full">
+                <Flame className="h-4 w-4 text-orange-500" />
+                <span className="text-sm font-medium">{profile.daily_streak || 0} day streak</span>
+              </div>
+            </div>
+          </header>
+
+          <div className="p-6">{renderPage()}</div>
+          <Footer />
+        </main>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 export default Index;

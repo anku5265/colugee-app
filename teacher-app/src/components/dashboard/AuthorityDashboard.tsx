@@ -73,13 +73,6 @@ export const AuthorityDashboard = ({ user, profile }: AuthorityDashboardProps) =
 
   const checkStreakStatus = async () => {
     try {
-      // For mock user, use mock data
-      if (user.id === 'test-teacher-123') {
-        setStreakCount(10);
-        setTodayCheckedIn(false);
-        return;
-      }
-
       const { data: profileData } = await supabase
         .from('profiles')
         .select('daily_streak, last_activity_date')
@@ -102,14 +95,6 @@ export const AuthorityDashboard = ({ user, profile }: AuthorityDashboardProps) =
 
   const handleDailyCheckIn = async () => {
     try {
-      // For mock user, just update UI
-      if (user.id === 'test-teacher-123') {
-        setStreakCount(prev => prev + 1);
-        setTodayCheckedIn(true);
-        toast.success(`Streak updated! ${streakCount + 1} days 🔥`);
-        return;
-      }
-
       const today = new Date().toISOString().split('T')[0];
       const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
       
@@ -148,39 +133,7 @@ export const AuthorityDashboard = ({ user, profile }: AuthorityDashboardProps) =
 
   const fetchDashboardData = async () => {
     try {
-      // For mock user, use mock data
-      if (user.id === 'test-teacher-123') {
-        setApprovalRequests([
-          {
-            id: '1',
-            title: 'Event Approval Request',
-            description: 'Tech Fest 2024 - Annual technical festival',
-            request_type: 'event',
-            priority: 'high',
-            status: 'pending'
-          },
-          {
-            id: '2',
-            title: 'Resource Allocation',
-            description: 'Lab equipment purchase request',
-            request_type: 'resource',
-            priority: 'medium',
-            status: 'pending'
-          }
-        ]);
-        
-        setInstitutionStats({
-          totalStudents: 450,
-          totalMentors: 25,
-          totalTeachers: 35,
-          activeEvents: 8
-        });
-        
-        setLoading(false);
-        return;
-      }
-
-      // Real database queries for actual users
+      // Real database queries
       const { data: requestsData } = await supabase
         .from('approval_requests')
         .select('*')
@@ -236,13 +189,6 @@ export const AuthorityDashboard = ({ user, profile }: AuthorityDashboardProps) =
 
   const handleApprovalRequest = async (requestId: string, action: 'approve' | 'reject') => {
     try {
-      // For mock user, just update UI
-      if (user.id === 'test-teacher-123') {
-        setApprovalRequests(prev => prev.filter((req: any) => req.id !== requestId));
-        toast.success(`Request ${action}d successfully!`);
-        return;
-      }
-
       const status = action === 'approve' ? 'approved' : 'rejected';
       
       const { error } = await supabase
@@ -303,19 +249,6 @@ export const AuthorityDashboard = ({ user, profile }: AuthorityDashboardProps) =
     }
 
     try {
-      // For mock user, just show success
-      if (user.id === 'test-teacher-123') {
-        toast.success('Announcement created successfully! (Demo Mode)');
-        setAnnouncementDialogOpen(false);
-        setAnnouncementForm({
-          title: '',
-          content: '',
-          announcement_type: 'department_update',
-          audience: ['all']
-        });
-        return;
-      }
-
       const { error } = await supabase
         .from('announcements')
         .insert({

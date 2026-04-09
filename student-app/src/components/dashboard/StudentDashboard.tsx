@@ -59,13 +59,6 @@ export const StudentDashboard = ({ user, profile }: StudentDashboardProps) => {
 
   const checkStreakStatus = async () => {
     try {
-      // For mock user, use mock data
-      if (user.id === 'test-user-123') {
-        setStreakCount(5);
-        setTodayCheckedIn(false);
-        return;
-      }
-
       const { data: profileData } = await supabase
         .from('profiles')
         .select('daily_streak, last_activity_date')
@@ -88,13 +81,6 @@ export const StudentDashboard = ({ user, profile }: StudentDashboardProps) => {
 
   const handleDailyCheckIn = async () => {
     try {
-      // For mock user, just update UI
-      if (user.id === 'test-user-123') {
-        setStreakCount(prev => prev + 1);
-        setTodayCheckedIn(true);
-        return;
-      }
-
       const today = new Date().toISOString().split('T')[0];
       const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
       
@@ -130,60 +116,7 @@ export const StudentDashboard = ({ user, profile }: StudentDashboardProps) => {
 
   const fetchDashboardData = async () => {
     try {
-      // For mock user, use mock data
-      if (user.id === 'test-user-123') {
-        setCertificates([
-          { id: '1', title: 'Web Development Bootcamp', issuer: 'Tech Academy', issue_date: '2024-01-15' },
-          { id: '2', title: 'Python Programming', issuer: 'Code Institute', issue_date: '2024-02-10' },
-          { id: '3', title: 'Data Science Fundamentals', issuer: 'Data School', issue_date: '2024-03-05' }
-        ]);
-
-        setAnnouncements([
-          {
-            id: '1',
-            title: 'Mid-Semester Exams Schedule',
-            content: 'Mid-semester examinations will be conducted from March 15-20. Please check your individual timetables.',
-            announcement_type: 'college_circular',
-            created_at: new Date().toISOString(),
-            profiles: { full_name: 'Dean Academic Affairs' }
-          },
-          {
-            id: '2',
-            title: 'Tech Fest 2024 Registration Open',
-            content: 'Annual technical festival registration is now open. Register your team before March 10th.',
-            announcement_type: 'club_event',
-            created_at: new Date(Date.now() - 86400000).toISOString(),
-            profiles: { full_name: 'Tech Club Coordinator' }
-          },
-          {
-            id: '3',
-            title: 'Library Hours Extended',
-            content: 'Library will remain open until 10 PM during exam season.',
-            announcement_type: 'department_update',
-            created_at: new Date(Date.now() - 172800000).toISOString(),
-            profiles: { full_name: 'Library Administrator' }
-          }
-        ]);
-
-        setLeaderboard([
-          { user_id: 'user1', full_name: 'Rahul Sharma', daily_streak: 45, department: 'Computer Science', profile_picture_url: null },
-          { user_id: 'user2', full_name: 'Priya Patel', daily_streak: 38, department: 'Electronics', profile_picture_url: null },
-          { user_id: 'user3', full_name: 'Amit Kumar', daily_streak: 32, department: 'Mechanical', profile_picture_url: null },
-          { user_id: 'user4', full_name: 'Sneha Reddy', daily_streak: 28, department: 'Computer Science', profile_picture_url: null },
-          { user_id: 'user5', full_name: 'Vikram Singh', daily_streak: 25, department: 'Civil', profile_picture_url: null },
-          { user_id: 'user6', full_name: 'Anjali Gupta', daily_streak: 22, department: 'Computer Science', profile_picture_url: null },
-          { user_id: 'user7', full_name: 'Rohan Verma', daily_streak: 20, department: 'Electronics', profile_picture_url: null },
-          { user_id: 'user8', full_name: 'Kavya Nair', daily_streak: 18, department: 'Information Technology', profile_picture_url: null },
-          { user_id: 'user9', full_name: 'Arjun Mehta', daily_streak: 15, department: 'Mechanical', profile_picture_url: null },
-          { user_id: 'user10', full_name: 'Divya Iyer', daily_streak: 12, department: 'Computer Science', profile_picture_url: null }
-        ]);
-
-        setUserRank(15);
-        setLoading(false);
-        return;
-      }
-
-      // Real database queries for actual users
+      // Real database queries
       const { data: certsData } = await supabase
         .from('certificates')
         .select('*')
@@ -233,23 +166,6 @@ export const StudentDashboard = ({ user, profile }: StudentDashboardProps) => {
 
   const fetchAllConnections = async () => {
     try {
-      // For mock user, use mock data
-      if (user.id === 'test-user-123') {
-        setAllConnections([
-          { user_id: 'conn1', full_name: 'Rahul Sharma', department: 'Computer Science', profile_picture_url: null },
-          { user_id: 'conn2', full_name: 'Priya Patel', department: 'Electronics', profile_picture_url: null },
-          { user_id: 'conn3', full_name: 'Amit Kumar', department: 'Mechanical', profile_picture_url: null },
-          { user_id: 'conn4', full_name: 'Sneha Reddy', department: 'Computer Science', profile_picture_url: null },
-          { user_id: 'conn5', full_name: 'Vikram Singh', department: 'Civil', profile_picture_url: null },
-          { user_id: 'conn6', full_name: 'Anjali Gupta', department: 'Information Technology', profile_picture_url: null },
-          { user_id: 'conn7', full_name: 'Rohan Verma', department: 'Electronics', profile_picture_url: null },
-          { user_id: 'conn8', full_name: 'Kavya Nair', department: 'Computer Science', profile_picture_url: null },
-          { user_id: 'conn9', full_name: 'Arjun Mehta', department: 'Mechanical', profile_picture_url: null },
-          { user_id: 'conn10', full_name: 'Divya Iyer', department: 'Computer Science', profile_picture_url: null }
-        ]);
-        return;
-      }
-
       const { data: connectionsData } = await supabase
         .from('connections')
         .select(`
