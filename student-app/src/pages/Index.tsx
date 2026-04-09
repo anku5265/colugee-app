@@ -90,12 +90,13 @@ const Index = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
+      if (!data) {
         // Profile nahi mili - logout kar do
         await supabase.auth.signOut();
         setAuthStep('institution');
+        setLoadingProfile(false);
         return;
       }
       setProfile(data);
