@@ -92,11 +92,18 @@ const Index = () => {
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
+      if (error || !data) {
+        // Profile nahi mili - logout kar do
+        await supabase.auth.signOut();
+        setAuthStep('institution');
+        return;
+      }
       setProfile(data);
       setAuthStep('app');
     } catch (error) {
       console.error('Error fetching profile:', error);
+      await supabase.auth.signOut();
+      setAuthStep('institution');
     } finally {
       setLoadingProfile(false);
     }
