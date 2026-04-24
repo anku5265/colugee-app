@@ -90,11 +90,11 @@ export const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
             <div className="flex items-center space-x-2">
               <Mail className="h-4 w-4 text-primary" />
-              <span>mishrakartikey121@gmail.com</span>
+              <span>contact@colugee.edu</span>
             </div>
             <div className="flex items-center space-x-2">
               <Phone className="h-4 w-4 text-primary" />
-              <span>+91 9369563887</span>
+              <span>+91 9876543210</span>
             </div>
             <div className="flex items-center space-x-2">
               <MapPin className="h-4 w-4 text-primary" />
