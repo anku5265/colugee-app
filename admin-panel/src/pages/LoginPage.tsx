@@ -28,18 +28,18 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       }
 
       if (data.user) {
-        // Check if user has authority/admin role
+        // Check if user has authority role only
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
           .eq('user_id', data.user.id)
           .single();
 
-        if (profile && (profile.role === 'authority' || profile.role === 'teacher')) {
+        if (profile && profile.role === 'authority') {
           onLogin();
         } else {
           await supabase.auth.signOut();
-          setError('Access denied. Only authority/teacher accounts can access admin panel.');
+          setError('Access denied. Only authority accounts can access the admin panel.');
         }
       }
     } catch (err) {
@@ -113,7 +113,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </form>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Only authority & teacher accounts have access
+          Only authority accounts have access to this panel
         </p>
       </div>
     </div>

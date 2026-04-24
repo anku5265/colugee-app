@@ -16,15 +16,26 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
+    // Check existing session and validate role
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+        if (profile?.role === 'authority') {
+          setIsAuthenticated(true);
+        } else {
+          await supabase.auth.signOut();
+        }
+      }
       setLoading(false);
     });
 
     // Listen to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
+      if (!session) setIsAuthenticated(false);
     });
 
     return () => subscription.unsubscribe();

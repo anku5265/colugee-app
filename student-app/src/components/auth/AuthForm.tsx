@@ -224,12 +224,6 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
             <p className="text-xs text-muted-foreground">
               Need help? Contact your institution administrator
             </p>
-            <a 
-              href="/signup" 
-              className="text-sm text-primary hover:underline block"
-            >
-              Create Test Account →
-            </a>
           </div>
         </CardContent>
       </Card>

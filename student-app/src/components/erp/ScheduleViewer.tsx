@@ -22,6 +22,7 @@ interface Schedule {
 
 interface ScheduleViewerProps {
   profile: {
+    user_id?: string;
     year_of_study?: number;
     section?: string;
     branch?: string;
@@ -31,9 +32,18 @@ interface ScheduleViewerProps {
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+const STATUS_STYLES: Record<string, { label: string; className: string }> = {
+  present: { label: 'Present', className: 'bg-green-500 text-white' },
+  absent: { label: 'Absent', className: 'bg-red-500 text-white' },
+  late: { label: 'Late', className: 'bg-yellow-500 text-white' },
+  excused: { label: 'Excused', className: 'bg-blue-500 text-white' },
+};
+
 export const ScheduleViewer = ({ profile }: ScheduleViewerProps) => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
+  // Map of scheduleId -> status for today's attendance
+  const [todayAttendance, setTodayAttendance] = useState<Map<string, string>>(new Map());
   const today = new Date().getDay();
 
   useEffect(() => {
@@ -50,7 +60,6 @@ export const ScheduleViewer = ({ profile }: ScheduleViewerProps) => {
 
       if (error) throw error;
 
-      // Filter schedules based on student's profile
       const filteredSchedules = (data || []).filter((schedule: Schedule) => {
         const matchesYear = !schedule.target_year || schedule.target_year === profile.year_of_study;
         const matchesSection = !schedule.target_section || schedule.target_section === profile.section;
@@ -60,6 +69,22 @@ export const ScheduleViewer = ({ profile }: ScheduleViewerProps) => {
       });
 
       setSchedules(filteredSchedules);
+
+      // Fetch today's attendance for these schedules
+      if (profile.user_id && filteredSchedules.length > 0) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const scheduleIds = filteredSchedules.map(s => s.id);
+        const { data: attData } = await supabase
+          .from('attendance')
+          .select('schedule_id, status')
+          .eq('student_id', profile.user_id)
+          .eq('attendance_date', todayStr)
+          .in('schedule_id', scheduleIds);
+
+        const attMap = new Map<string, string>();
+        (attData || []).forEach((a: any) => attMap.set(a.schedule_id, a.status));
+        setTodayAttendance(attMap);
+      }
     } catch (error) {
       console.error('Error fetching schedules:', error);
     } finally {
@@ -152,9 +177,21 @@ export const ScheduleViewer = ({ profile }: ScheduleViewerProps) => {
                               )}
                             </div>
                           </div>
-                          <Badge variant="secondary" className="text-xs">
-                            {formatTime(schedule.start_time)}
-                          </Badge>
+                          <div className="flex flex-col items-end gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                              {formatTime(schedule.start_time)}
+                            </Badge>
+                            {/* Show today's attendance status */}
+                            {index === today && todayAttendance.has(schedule.id) && (() => {
+                              const status = todayAttendance.get(schedule.id)!;
+                              const style = STATUS_STYLES[status] || { label: status, className: 'bg-gray-500 text-white' };
+                              return (
+                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${style.className}`}>
+                                  {style.label}
+                                </span>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
                     ))

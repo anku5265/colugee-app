@@ -159,13 +159,16 @@ export const AttendanceManager = ({ user, institutionId }: AttendanceManagerProp
         marked_by: user.id
       }));
 
-      // Upsert attendance records
+      // Delete existing and re-insert for clean upsert
+      await supabase
+        .from('attendance')
+        .delete()
+        .eq('schedule_id', selectedSchedule.id)
+        .eq('attendance_date', dateStr);
+
       const { error } = await supabase
         .from('attendance')
-        .upsert(records, { 
-          onConflict: 'schedule_id,student_id,attendance_date',
-          ignoreDuplicates: false 
-        });
+        .insert(records);
 
       if (error) throw error;
 

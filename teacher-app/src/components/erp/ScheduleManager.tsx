@@ -119,7 +119,6 @@ export const ScheduleManager = ({ user, institutionId }: ScheduleManagerProps) =
         target_branch: form.target_branch.trim() || null,
         target_department: form.target_department.trim() || null,
         institution_id: institutionId,
-        created_by: user.id
       };
 
       if (editingSchedule) {
