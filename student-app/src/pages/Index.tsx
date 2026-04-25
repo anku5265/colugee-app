@@ -15,14 +15,24 @@ import { StudyGroupsPage } from "@/components/pages/StudyGroupsPage";
 import { ChatPage } from "@/components/pages/ChatPage";
 import { FeedPage } from "@/components/pages/FeedPage";
 import { StudentDashboard } from "@/components/dashboard/StudentDashboard";
+import { AuthorityDashboard } from "@/components/dashboard/AuthorityDashboard";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
+// Admin panel components
+import AdminDashboard from "@/components/admin/AdminDashboard";
+import AdminUsersPage from "@/components/admin/AdminUsersPage";
+import AdminAcademicsPage from "@/components/admin/AdminAcademicsPage";
+import AdminAttendancePage from "@/components/admin/AdminAttendancePage";
+import AdminFeesPage from "@/components/admin/AdminFeesPage";
+import AdminReportsPage from "@/components/admin/AdminReportsPage";
+import AdminSettingsPage from "@/components/admin/AdminSettingsPage";
+import AdminSuperPage from "@/components/admin/AdminSuperPage";
 import {
   LayoutDashboard, Rss, UserPlus, MessageCircle, Search,
   Handshake, Calendar, BookOpen, Users, GraduationCap,
-  LogOut, Menu, X, Flame
+  LogOut, Menu, X, Flame, Building2, CheckSquare,
+  DollarSign, FileText, Settings, Shield
 } from "lucide-react";
 
 interface Institution {
@@ -48,11 +58,51 @@ interface Profile {
   profile_picture_url?: string;
 }
 
+// Nav items per role
+const studentNavItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "feed", label: "Feed", icon: Rss },
+  { id: "connect", label: "Connect", icon: UserPlus },
+  { id: "messages", label: "Messages", icon: MessageCircle },
+  { id: "discover", label: "Discover", icon: Search },
+  { id: "collaborate", label: "Collaborate", icon: Handshake },
+  { id: "events", label: "Events", icon: Calendar },
+  { id: "resources", label: "Resources", icon: BookOpen },
+  { id: "study-groups", label: "Study Groups", icon: Users },
+];
+
+const teacherNavItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "feed", label: "Feed", icon: Rss },
+  { id: "connect", label: "Connect", icon: UserPlus },
+  { id: "messages", label: "Messages", icon: MessageCircle },
+  { id: "discover", label: "Discover", icon: Search },
+  { id: "collaborate", label: "Collaborate", icon: Handshake },
+  { id: "events", label: "Events", icon: Calendar },
+  { id: "resources", label: "Resources", icon: BookOpen },
+  { id: "study-groups", label: "Study Groups", icon: Users },
+];
+
+const adminNavItems = [
+  { id: "admin-dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "admin-users", label: "Users", icon: Users },
+  { id: "admin-academics", label: "Academics", icon: BookOpen },
+  { id: "admin-attendance", label: "Attendance", icon: CheckSquare },
+  { id: "admin-fees", label: "Fees", icon: DollarSign },
+  { id: "admin-reports", label: "Reports", icon: FileText },
+  { id: "admin-settings", label: "Settings", icon: Settings },
+];
+
+const superAdminNavItems = [
+  { id: "admin-dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "admin-tenants", label: "Tenant Management", icon: Building2 },
+];
+
 type AuthStep = 'institution' | 'auth' | 'app';
 
 const Index = () => {
   const [authStep, setAuthStep] = useState<AuthStep>('institution');
-  const [institution, setInstitution] = useState<Institution | null>(null);
+  const [institution, setInstitution] = useState<any | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -111,18 +161,16 @@ const Index = () => {
         return;
       }
 
-      // Non-student roles should not be in this app
-      // They get redirected from AuthForm, but handle session restore too
-      const nonStudentRoles = ['teacher', 'authority', 'super_admin', 'institute_admin'];
-      if (nonStudentRoles.includes(data.role)) {
-        // Already redirected by AuthForm on fresh login
-        // On session restore, just sign out so they go back to login
-        await supabase.auth.signOut();
-        setAuthStep('institution');
-        return;
-      }
-
       setProfile(data);
+      // Set default page based on role
+      const adminRoles = ['authority', 'institute_admin'];
+      if (data.role === 'super_admin') {
+        setCurrentPage('admin-dashboard');
+      } else if (adminRoles.includes(data.role)) {
+        setCurrentPage('admin-dashboard');
+      } else {
+        setCurrentPage('dashboard');
+      }
       setAuthStep('app');
     } catch (error) {
       clearTimeout(timeout);
@@ -142,20 +190,68 @@ const Index = () => {
     setProfile(null);
   };
 
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "feed", label: "Feed", icon: Rss },
-    { id: "connect", label: "Connect", icon: UserPlus },
-    { id: "messages", label: "Messages", icon: MessageCircle },
-    { id: "discover", label: "Discover", icon: Search },
-    { id: "collaborate", label: "Collaborate", icon: Handshake },
-    { id: "events", label: "Events", icon: Calendar },
-    { id: "resources", label: "Resources", icon: BookOpen },
-    { id: "study-groups", label: "Study Groups", icon: Users },
-  ];
+  const isAdminRole = (role?: string) => ['authority', 'institute_admin', 'super_admin'].includes(role || '');
+  const isTeacherRole = (role?: string) => role === 'teacher';
+
+  const getNavItems = () => {
+    if (!profile) return studentNavItems;
+    if (profile.role === 'super_admin') return superAdminNavItems;
+    if (isAdminRole(profile.role)) return adminNavItems;
+    if (isTeacherRole(profile.role)) return teacherNavItems;
+    return studentNavItems;
+  };
+
+  const getRoleBadge = () => {
+    if (!profile) return null;
+    const map: Record<string, { label: string; color: string }> = {
+      super_admin: { label: '⚡ Super Admin', color: 'bg-purple-100 text-purple-700' },
+      institute_admin: { label: '🏫 Institute Admin', color: 'bg-blue-100 text-blue-700' },
+      authority: { label: '🛡️ Authority', color: 'bg-green-100 text-green-700' },
+      teacher: { label: '📚 Teacher', color: 'bg-orange-100 text-orange-700' },
+      student: { label: '🎓 Student', color: 'bg-gray-100 text-gray-700' },
+      mentor: { label: '🧠 Mentor', color: 'bg-teal-100 text-teal-700' },
+    };
+    const badge = map[profile.role];
+    if (!badge) return null;
+    return <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.color}`}>{badge.label}</span>;
+  };
 
   const renderPage = () => {
     if (!user || !profile) return null;
+
+    // Admin pages
+    if (isAdminRole(profile.role) || profile.role === 'super_admin') {
+      switch (currentPage) {
+        case 'admin-dashboard': return profile.role === 'super_admin' ? <AdminDashboard /> : <AdminDashboard />;
+        case 'admin-users': return <AdminUsersPage />;
+        case 'admin-academics': return <AdminAcademicsPage />;
+        case 'admin-attendance': return <AdminAttendancePage />;
+        case 'admin-fees': return <AdminFeesPage />;
+        case 'admin-reports': return <AdminReportsPage />;
+        case 'admin-settings': return <AdminSettingsPage />;
+        case 'admin-tenants': return <AdminSuperPage />;
+        default: return <AdminDashboard />;
+      }
+    }
+
+    // Teacher pages
+    if (isTeacherRole(profile.role)) {
+      switch (currentPage) {
+        case "profile": return <ProfilePage user={user} />;
+        case "enhanced-profile": return <EnhancedProfilePage user={user} />;
+        case "connect": return <ConnectPage />;
+        case "messages": return <ChatPage />;
+        case "feed": return <FeedPage />;
+        case "discover": return <DiscoverPage />;
+        case "collaborate": return <CollaboratePage />;
+        case "events": return <EventsPage />;
+        case "resources": return <EnhancedResourcesPage />;
+        case "study-groups": return <StudyGroupsPage />;
+        case "dashboard": default: return <AuthorityDashboard user={user} profile={profile as any} />;
+      }
+    }
+
+    // Student pages
     switch (currentPage) {
       case "profile": return <ProfilePage user={user} />;
       case "enhanced-profile": return <EnhancedProfilePage user={user} />;
@@ -210,6 +306,10 @@ const Index = () => {
 
   // Step 3: Main App
   if (authStep === 'app' && user && profile) {
+    const navItems = getNavItems();
+    const isAdmin = isAdminRole(profile.role) || profile.role === 'super_admin';
+    const accentColor = isAdmin ? 'blue' : isTeacherRole(profile.role) ? 'orange' : 'primary';
+
     return (
       <div className="min-h-screen bg-background flex">
         {/* Sidebar */}
@@ -233,6 +333,13 @@ const Index = () => {
               </Button>
             )}
           </div>
+
+          {/* Role badge */}
+          {sidebarOpen && (
+            <div className="px-4 py-2 border-b border-border">
+              {getRoleBadge()}
+            </div>
+          )}
 
           <nav className="p-4 space-y-2">
             {navItems.map((item) => {
@@ -296,15 +403,17 @@ const Index = () => {
               <p className="text-sm text-muted-foreground">{profile.department}</p>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 px-3 py-1.5 bg-orange-500/10 rounded-full">
-                <Flame className="h-4 w-4 text-orange-500" />
-                <span className="text-sm font-medium">{profile.daily_streak || 0} day streak</span>
-              </div>
+              {!isAdmin && (
+                <div className="flex items-center space-x-2 px-3 py-1.5 bg-orange-500/10 rounded-full">
+                  <Flame className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm font-medium">{profile.daily_streak || 0} day streak</span>
+                </div>
+              )}
             </div>
           </header>
 
-          <div className="p-6">{renderPage()}</div>
-          <Footer />
+          <div className={`${isAdmin ? 'p-6' : 'p-6'}`}>{renderPage()}</div>
+          {!isAdmin && <Footer />}
         </main>
       </div>
     );

@@ -24,9 +24,9 @@ interface AuthFormProps {
   onBack: () => void;
 }
 
-// App URLs - production Vercel deployments
-const TEACHER_APP_URL = import.meta.env.VITE_TEACHER_APP_URL || 'https://colugee-teacher.vercel.app';
-const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || 'https://colugee-admin.vercel.app';
+// All roles now handled in same app - no cross-domain redirects needed
+const TEACHER_APP_URL = import.meta.env.VITE_TEACHER_APP_URL || '';
+const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || '';
 
 const ADMIN_ROLES  = ['super_admin', 'institute_admin', 'authority'];
 const TEACHER_ROLES = ['teacher'];
@@ -85,25 +85,20 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
         return;
       }
 
-      // Step 4: Role-based redirect
+      // Step 4: All roles stay in same app - session handles routing
       const role = profile.role;
 
       if (ADMIN_ROLES.includes(role)) {
-        // Admin → redirect to admin panel
-        toast({ title: "Redirecting to Admin Panel...", description: `Welcome, ${profile.full_name}` });
-        setTimeout(() => { window.location.href = ADMIN_APP_URL; }, 800);
+        toast({ title: "Welcome to Admin Panel! 🛡️", description: `Hello, ${profile.full_name}` });
         return;
       }
 
       if (TEACHER_ROLES.includes(role)) {
-        // Teacher → redirect to teacher app
-        toast({ title: "Redirecting to Teacher Dashboard...", description: `Welcome, ${profile.full_name}` });
-        setTimeout(() => { window.location.href = TEACHER_APP_URL; }, 800);
+        toast({ title: "Welcome back! 👋", description: `Hello, ${profile.full_name}` });
         return;
       }
 
       if (STUDENT_ROLES.includes(role)) {
-        // Student → stay in this app (auth state change will handle it)
         toast({ title: "Welcome back! 👋", description: `Ready to go, ${profile.full_name}?` });
         return;
       }
