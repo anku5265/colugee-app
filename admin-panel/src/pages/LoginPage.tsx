@@ -28,18 +28,19 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       }
 
       if (data.user) {
-        // Check if user has authority role only
+        // Check if user has super_admin, institute_admin, or authority role
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, full_name')
           .eq('user_id', data.user.id)
           .single();
 
-        if (profile && profile.role === 'authority') {
+        const allowedRoles = ['super_admin', 'institute_admin', 'authority'];
+        if (profile && allowedRoles.includes(profile.role)) {
           onLogin();
         } else {
           await supabase.auth.signOut();
-          setError('Access denied. Only authority accounts can access the admin panel.');
+          setError('Access denied. Only admin accounts can access this panel.');
         }
       }
     } catch (err) {
@@ -113,7 +114,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         </form>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Only authority accounts have access to this panel
+          Super Admin, Institute Admin, and Authority accounts have access
         </p>
       </div>
     </div>

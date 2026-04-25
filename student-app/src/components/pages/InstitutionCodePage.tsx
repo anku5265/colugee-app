@@ -48,6 +48,25 @@ export const InstitutionCodePage = ({ onInstitutionSelected }: InstitutionCodePa
         return;
       }
 
+      // Check if tenant is active
+      if (data.status === 'suspended') {
+        toast({
+          title: "Access Suspended",
+          description: "This institution has been suspended. Please contact the platform administrator.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.status === 'deleted') {
+        toast({
+          title: "Institution not found",
+          description: "Please check your institution code and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setInstitution(data);
       toast({
         title: "Institution found!",

@@ -10,40 +10,62 @@ import AttendancePage from './pages/AttendancePage';
 import FeesPage from './pages/FeesPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
+import SuperAdminPage from './pages/SuperAdminPage';
+
+export type UserRole = 'super_admin' | 'institute_admin' | 'authority' | null;
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
 
+  const ALLOWED_ROLES: UserRole[] = ['super_admin', 'institute_admin', 'authority'];
+
+  const validateAndSetUser = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    const role = profile?.role as UserRole;
+    if (role && ALLOWED_ROLES.includes(role)) {
+      setUserRole(role);
+      setIsAuthenticated(true);
+    } else {
+      await supabase.auth.signOut();
+      setIsAuthenticated(false);
+      setUserRole(null);
+    }
+  };
+
   useEffect(() => {
-    // Check existing session and validate role
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single();
-        if (profile?.role === 'authority') {
-          setIsAuthenticated(true);
-        } else {
-          await supabase.auth.signOut();
-        }
+        await validateAndSetUser(session.user.id);
       }
       setLoading(false);
     });
 
-    // Listen to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) setIsAuthenticated(false);
+      if (!session) {
+        setIsAuthenticated(false);
+        setUserRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleLogin = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await validateAndSetUser(user.id);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
+    setUserRole(null);
   };
 
   if (loading) {
@@ -65,19 +87,33 @@ function App() {
           element={
             isAuthenticated
               ? <Navigate to="/" replace />
-              : <LoginPage onLogin={() => setIsAuthenticated(true)} />
+              : <LoginPage onLogin={handleLogin} />
           }
         />
 
         {isAuthenticated ? (
-          <Route path="/" element={<DashboardLayout onLogout={handleLogout} />}>
+          <Route path="/" element={<DashboardLayout onLogout={handleLogout} userRole={userRole} />}>
             <Route index element={<Dashboard />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="academics" element={<AcademicsPage />} />
-            <Route path="attendance" element={<AttendancePage />} />
-            <Route path="fees" element={<FeesPage />} />
-            <Route path="reports" element={<ReportsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+
+            {/* Super Admin only */}
+            {userRole === 'super_admin' && (
+              <Route path="tenants" element={<SuperAdminPage />} />
+            )}
+
+            {/* Institute Admin + Authority */}
+            {(userRole === 'institute_admin' || userRole === 'authority') && (
+              <>
+                <Route path="users" element={<UsersPage />} />
+                <Route path="academics" element={<AcademicsPage />} />
+                <Route path="attendance" element={<AttendancePage />} />
+                <Route path="fees" element={<FeesPage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </>
+            )}
+
+            {/* Catch-all redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/login" replace />} />
