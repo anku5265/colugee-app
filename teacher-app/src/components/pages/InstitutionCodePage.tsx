@@ -22,7 +22,9 @@ interface InstitutionCodePageProps {
 }
 
 export const InstitutionCodePage = ({ onInstitutionSelected }: InstitutionCodePageProps) => {
-  const [institutionCode, setInstitutionCode] = useState("");
+  const [institutionCode, setInstitutionCode] = useState(() => {
+    return localStorage.getItem('colugee_last_code') || "";
+  });
   const [loading, setLoading] = useState(false);
   const [institution, setInstitution] = useState<Institution | null>(null);
   const { toast } = useToast();
@@ -68,6 +70,7 @@ export const InstitutionCodePage = ({ onInstitutionSelected }: InstitutionCodePa
       }
 
       setInstitution(data);
+      localStorage.setItem('colugee_last_code', institutionCode.toUpperCase());
       toast({
         title: "Institution found!",
         description: `Welcome to ${data.name}`,
