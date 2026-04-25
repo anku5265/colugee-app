@@ -37,7 +37,7 @@ interface Institution {
 interface Profile {
   id: string;
   user_id: string;
-  role: 'student' | 'mentor' | 'teacher' | 'authority';
+  role: 'student' | 'mentor' | 'teacher' | 'authority' | 'super_admin' | 'institute_admin';
   institution_id: string;
   institution_roll_number: string;
   full_name: string;
@@ -110,6 +110,18 @@ const Index = () => {
         setAuthStep('institution');
         return;
       }
+
+      // Non-student roles should not be in this app
+      // They get redirected from AuthForm, but handle session restore too
+      const nonStudentRoles = ['teacher', 'authority', 'super_admin', 'institute_admin'];
+      if (nonStudentRoles.includes(data.role)) {
+        // Already redirected by AuthForm on fresh login
+        // On session restore, just sign out so they go back to login
+        await supabase.auth.signOut();
+        setAuthStep('institution');
+        return;
+      }
+
       setProfile(data);
       setAuthStep('app');
     } catch (error) {

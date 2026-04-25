@@ -24,6 +24,14 @@ interface AuthFormProps {
   onBack: () => void;
 }
 
+// App URLs for redirect
+const STUDENT_APP_URL = import.meta.env.VITE_STUDENT_APP_URL || 'http://localhost:5173';
+const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || 'http://localhost:5175';
+
+const ADMIN_ROLES   = ['super_admin', 'institute_admin', 'authority'];
+const TEACHER_ROLES = ['teacher'];
+const STUDENT_ROLES = ['student', 'mentor'];
+
 const signInSchema = z.object({
   email: z.string().min(1, "Email is required").max(255, "Too long"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -48,7 +56,7 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
       });
 
       if (authError) {
-        toast({ title: "Login Failed", description: authError.message, variant: "destructive" });
+        toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
         return;
       }
 
@@ -64,19 +72,41 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
         return;
       }
 
+      // Tenant check
       if (profile.institution_id !== institution.id) {
         await supabase.auth.signOut();
-        toast({ title: "Access Denied", description: "You are not registered with this institution.", variant: "destructive" });
+        toast({
+          title: "Invalid credentials for this institute",
+          description: `This account is not registered with ${institution.name}.`,
+          variant: "destructive",
+        });
         return;
       }
 
-      if (!['teacher', 'authority'].includes(profile.role)) {
-        await supabase.auth.signOut();
-        toast({ title: "Access Denied", description: "Only teacher and authority accounts can access this app.", variant: "destructive" });
+      const role = profile.role;
+
+      // Role-based redirect
+      if (ADMIN_ROLES.includes(role)) {
+        toast({ title: "Redirecting to Admin Panel...", description: `Welcome, ${profile.full_name}` });
+        setTimeout(() => { window.location.href = ADMIN_APP_URL; }, 800);
         return;
       }
 
-      toast({ title: "Welcome back! 👋", description: `Hello, ${profile.full_name}` });
+      if (STUDENT_ROLES.includes(role)) {
+        toast({ title: "Redirecting to Student App...", description: `Welcome, ${profile.full_name}` });
+        setTimeout(() => { window.location.href = STUDENT_APP_URL; }, 800);
+        return;
+      }
+
+      if (TEACHER_ROLES.includes(role)) {
+        // Teacher stays in this app
+        toast({ title: "Welcome back! 👋", description: `Hello, ${profile.full_name}` });
+        return;
+      }
+
+      await supabase.auth.signOut();
+      toast({ title: "Access Denied", description: "Your account role is not recognized.", variant: "destructive" });
+
     } catch {
       toast({ title: "Error", description: "An unexpected error occurred", variant: "destructive" });
     } finally {
@@ -110,8 +140,8 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">Teacher Login</h2>
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-bold text-foreground">Sign In</h2>
               <p className="text-sm text-muted-foreground">Enter your credentials to access your account</p>
             </div>
 

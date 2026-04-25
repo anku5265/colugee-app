@@ -24,18 +24,18 @@ interface AuthFormProps {
   onBack: () => void;
 }
 
+// App URLs - configurable via env vars, fallback to localhost for dev
+const TEACHER_APP_URL = import.meta.env.VITE_TEACHER_APP_URL || 'http://localhost:5174';
+const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || 'http://localhost:5175';
+
+const ADMIN_ROLES  = ['super_admin', 'institute_admin', 'authority'];
+const TEACHER_ROLES = ['teacher'];
+const STUDENT_ROLES = ['student', 'mentor'];
+
 const signInSchema = z.object({
   email: z.string().min(1, "Email is required").max(255, "Too long"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
-
-// Role → App URL mapping
-// Uses env vars in production, falls back to localhost ports for dev
-const TEACHER_APP_URL = import.meta.env.VITE_TEACHER_APP_URL || "http://localhost:5174";
-const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || "http://localhost:5175";
-
-const TEACHER_ROLES  = ['teacher', 'authority'];
-const ADMIN_ROLES    = ['institute_admin', 'super_admin'];
 
 export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
   const [loading, setLoading] = useState(false);
@@ -61,7 +61,7 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
         return;
       }
 
-      // Step 2: Fetch profile
+      // Step 2: Get profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('institution_id, role, full_name')
@@ -74,35 +74,43 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
         return;
       }
 
-      // Step 3: Tenant check — user must belong to this institution
-      // super_admin has no institution_id, allow them through admin panel only
-      if (profile.role !== 'super_admin' && profile.institution_id !== institution.id) {
+      // Step 3: Tenant check - user must belong to this institution
+      if (profile.institution_id !== institution.id) {
         await supabase.auth.signOut();
         toast({
           title: "Invalid credentials for this institute",
-          description: `This account is not registered with ${institution.code}. Please use the correct institution code.`,
+          description: `This account is not registered with ${institution.name}. Please use the correct institution code.`,
           variant: "destructive",
         });
         return;
       }
 
       // Step 4: Role-based redirect
-      if (ADMIN_ROLES.includes(profile.role)) {
-        // Redirect to admin panel
+      const role = profile.role;
+
+      if (ADMIN_ROLES.includes(role)) {
+        // Admin → redirect to admin panel
         toast({ title: "Redirecting to Admin Panel...", description: `Welcome, ${profile.full_name}` });
         setTimeout(() => { window.location.href = ADMIN_APP_URL; }, 800);
         return;
       }
 
-      if (TEACHER_ROLES.includes(profile.role)) {
-        // Redirect to teacher app
+      if (TEACHER_ROLES.includes(role)) {
+        // Teacher → redirect to teacher app
         toast({ title: "Redirecting to Teacher Dashboard...", description: `Welcome, ${profile.full_name}` });
         setTimeout(() => { window.location.href = TEACHER_APP_URL; }, 800);
         return;
       }
 
-      // Step 5: Student — stay in this app
-      toast({ title: "Welcome back! 👋", description: `Ready to go, ${profile.full_name}?` });
+      if (STUDENT_ROLES.includes(role)) {
+        // Student → stay in this app (auth state change will handle it)
+        toast({ title: "Welcome back! 👋", description: `Ready to go, ${profile.full_name}?` });
+        return;
+      }
+
+      // Unknown role fallback
+      await supabase.auth.signOut();
+      toast({ title: "Access Denied", description: "Your account role is not recognized.", variant: "destructive" });
 
     } catch {
       toast({ title: "Error", description: "An unexpected error occurred. Please try again.", variant: "destructive" });
@@ -141,7 +149,7 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
         <CardContent>
           <div className="space-y-6">
             <div className="text-center space-y-1">
-              <h2 className="text-2xl font-bold text-foreground">Login</h2>
+              <h2 className="text-2xl font-bold text-foreground">Sign In</h2>
               <p className="text-sm text-muted-foreground">
                 Enter your credentials — you'll be directed to the right dashboard automatically
               </p>
@@ -159,7 +167,6 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
                         <Input
                           placeholder="your.email@domain.com"
                           className="bg-background/50 border-primary/20 focus:border-primary"
-                          autoComplete="email"
                           {...field}
                         />
                       </FormControl>
@@ -179,7 +186,6 @@ export const AuthForm = ({ institution, onBack }: AuthFormProps) => {
                             type={showPassword ? "text" : "password"}
                             placeholder="Enter your password"
                             className="bg-background/50 border-primary/20 focus:border-primary pr-10"
-                            autoComplete="current-password"
                             {...field}
                           />
                           <button
