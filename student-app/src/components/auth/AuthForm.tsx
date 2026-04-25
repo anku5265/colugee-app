@@ -24,9 +24,9 @@ interface AuthFormProps {
   onBack: () => void;
 }
 
-// App URLs - configurable via env vars, fallback to localhost for dev
-const TEACHER_APP_URL = import.meta.env.VITE_TEACHER_APP_URL || 'http://localhost:5174';
-const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || 'http://localhost:5175';
+// App URLs - production Vercel deployments
+const TEACHER_APP_URL = import.meta.env.VITE_TEACHER_APP_URL || 'https://colugee-teacher.vercel.app';
+const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || 'https://colugee-admin.vercel.app';
 
 const ADMIN_ROLES  = ['super_admin', 'institute_admin', 'authority'];
 const TEACHER_ROLES = ['teacher'];

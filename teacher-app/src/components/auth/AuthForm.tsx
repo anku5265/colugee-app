@@ -25,8 +25,8 @@ interface AuthFormProps {
 }
 
 // App URLs for redirect
-const STUDENT_APP_URL = import.meta.env.VITE_STUDENT_APP_URL || 'http://localhost:5173';
-const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || 'http://localhost:5175';
+const STUDENT_APP_URL = import.meta.env.VITE_STUDENT_APP_URL || 'https://colugee-student.vercel.app';
+const ADMIN_APP_URL   = import.meta.env.VITE_ADMIN_APP_URL   || 'https://colugee-admin.vercel.app';
 
 const ADMIN_ROLES   = ['super_admin', 'institute_admin', 'authority'];
 const TEACHER_ROLES = ['teacher'];
