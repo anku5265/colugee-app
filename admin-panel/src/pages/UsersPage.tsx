@@ -129,7 +129,7 @@ export default function UsersPage() {
       const { data: existing } = await supabase.from('profiles').select('id').eq('email', form.email).maybeSingle();
       if (existing) { setError('A user with this email already exists.'); return; }
 
-      // Create auth user via Supabase Admin (using service role via edge function or direct signUp)
+      // Step 1: Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -137,23 +137,25 @@ export default function UsersPage() {
           data: {
             full_name: form.full_name,
             institution_id: institutionId,
-            institution_roll_number: form.institution_roll_number,
+            institution_roll_number: form.institution_roll_number || null,
             role: form.role,
             department: form.department,
             year_of_study: form.role === 'student' && form.year_of_study ? parseInt(form.year_of_study) : null,
             section: form.role === 'student' ? form.section || null : null,
             branch: form.role === 'student' ? form.branch || null : null,
-            subject_specialization: form.role === 'teacher' ? form.subject_specialization : null,
           },
         },
       });
 
       if (authError) { setError(authError.message); return; }
-      if (!authData.user) { setError('Failed to create user.'); return; }
 
-      // Upsert profile (trigger may have already created it)
-      await supabase.from('profiles').upsert({
-        user_id: authData.user.id,
+      // authData.user can be non-null even if email not confirmed
+      const userId = authData.user?.id;
+      if (!userId) { setError('User creation failed. This email may already be registered.'); return; }
+
+      // Step 2: Upsert profile — DB trigger may have already created it
+      const profilePayload: Record<string, any> = {
+        user_id: userId,
         email: form.email,
         full_name: form.full_name,
         role: form.role,
@@ -163,11 +165,20 @@ export default function UsersPage() {
         year_of_study: form.role === 'student' && form.year_of_study ? parseInt(form.year_of_study) : null,
         section: form.role === 'student' ? form.section || null : null,
         branch: form.role === 'student' ? form.branch || null : null,
-        subject_specialization: form.role === 'teacher' ? form.subject_specialization || null : null,
-      }, { onConflict: 'user_id' });
+      };
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert(profilePayload, { onConflict: 'user_id' });
+
+      if (profileError) {
+        setError(`User auth created but profile save failed: ${profileError.message}`);
+        return;
+      }
 
       setShowCreate(false);
       setForm(EMPTY_FORM);
+      setShowPassword(false);
       fetchUsers();
     } catch (e: any) {
       setError(e.message || 'Failed to create user.');
